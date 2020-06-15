@@ -4,6 +4,10 @@ if (!process.env.EMAIL || !process.env.PASSWORD) {
   throw new Error('環境変数にEMAILまたはPASSWORDが指定されていません')
 }
 
+function getnum(str) {
+  return Number(str.replace(/[^0-9]/g,''));
+}
+
 (async () => {
   const goToOpt = {waitUntil: ['load', 'networkidle0']}
 
@@ -35,35 +39,94 @@ if (!process.env.EMAIL || !process.env.PASSWORD) {
   await page.type('input[type="password"]', process.env.PASSWORD);
   await page.click('input[type="submit"]')
 
-  await page.goto('https://moneyforward.com/accounts', goToOpt)
+  // 資産を分類してリバランスを提案する
+  await page.goto('https://moneyforward.com/bs/portfolio', goToOpt);
 
-  // 押下可能な更新ボタンの数を調べる
-  const buttonSelector = 'input:not(disabled)[type="submit"][name="commit"][value="更新"]'
-  const buttonCount = await page.$$eval(buttonSelector, buttons => buttons.length)
+  // 資産総額
+  const result_t = await page.evaluate(() => {
+    return document.querySelector('.heading-radius-box').textContent;
+  });
+  const total = getnum(result_t);
 
-  // table#account-table内のtrをひとつづつ確認し更新ボタンが存在したらクリック
-  let i = 1
-  let clickedCount = 0
-  while (clickedCount < buttonCount) {
-    // #registration-tableが2つあるので.accountsで絞るつらみ
-    const trSelector = `section#registration-table.accounts table#account-table tr:nth-child(${i})`
-    if (await page.$$eval(`${trSelector} ${buttonSelector}`, l => l.length)) {
-      let account = await page.evaluate((sel) => {
-        let element = document.querySelector(sel)
-        if (element) {
-          return element.textContent
-            .replace(/\([\s\S]*/, '')
-            .replace(/[\n\r]*/g, '')
-        }
-      }, `${trSelector} td:first-child`)
-
-      console.info(account)
-
-      await page.click(`${trSelector} ${buttonSelector}`)
-      clickedCount++
+  // 預金・現金・仮想通貨
+  const result_m = await page.$$eval('.table-depo > tbody:nth-child(2) > tr', trs => trs.map(tr => {
+    const tds = [...tr.getElementsByTagName('td')];
+    return tds.map(td => td.textContent);
+  }));
+  let money_yen = 0;
+  let money_usd = 0;
+  result_m.forEach(function(item, index, array) {
+    if (/ドル/.test(item[0])) {
+      money_usd += getnum(item[1]);
+    } else {
+      money_yen += getnum(item[1]);
     }
-    i++
+  });
+
+  // 株式（現物）
+  const result_eq = await page.$$eval('.table-eq > tbody:nth-child(2) > tr', trs => trs.map(tr => {
+    const tds = [...tr.getElementsByTagName('td')];
+    return tds.map(td => td.textContent);
+  }));
+  let equity = 0;
+  let bond = 0;
+  result_eq.forEach(function(item, index, array) {
+    if (/債/.test(item[1])) {
+      bond += getnum(item[5]);
+    } else {
+      equity += getnum(item[5]);
+    }
+  });
+
+  // 投資信託
+  const result_mf = await page.$$eval('.table-mf > tbody:nth-child(2) > tr', trs => trs.map(tr => {
+    const tds = [...tr.getElementsByTagName('td')];
+    return tds.map(td => td.textContent);
+  }));
+  result_mf.forEach(function(item, index, array) {
+    if (/ノムラ・グローバル・セレクト・トラスト/.test(item[0])) {
+      money_usd += getnum(item[4]);
+    } else {
+      equity += getnum(item[4]);
+    }
+  });
+
+  // 債券
+  const result_bd = await page.$$eval('.table-bd > tbody:nth-child(2) > tr', trs => trs.map(tr => {
+    const tds = [...tr.getElementsByTagName('td')];
+    return tds.map(td => td.textContent);
+  }));
+  let bond_keep = 0;
+  result_bd.forEach(function(item, index, array) {
+    bond_keep += getnum(item[1]);
+  });
+
+  // 年金
+  const result_pns = await page.$$eval('.table-pns > tbody:nth-child(2) > tr', trs => trs.map(tr => {
+    const tds = [...tr.getElementsByTagName('td')];
+    return tds.map(td => td.textContent);
+  }));
+  result_pns.forEach(function(item, index, array) {
+    if (/株式/.test(item[0])) {
+      equity += getnum(item[2]);
+    } else {
+      bond += getnum(item[5]);
+    }
+  });
+
+  // 検算
+  if (Math.abs(money_yen + money_usd + equity + bond + bond_keep - total) > 10) {
+    throw new Error("検算の結果、資産総額が一致しません");
   }
+
+  console.log("現金(円): " + money_yen);
+  console.log("現金(ドル): " + money_usd);
+  console.log("株式: " + equity);
+  console.log("債券: " + bond);
+  console.log("満期まで保有する債券: " + bond_keep);
+  console.log("資産総額: "+ total);
+
+  // xxx TODO
 
   await browser.close()
 })();
