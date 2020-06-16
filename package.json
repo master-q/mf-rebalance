@@ -1,9 +1,9 @@
 {
-  "name": "mf-all-updater",
-  "version": "2.0.0",
+  "name": "mf-rebalance",
+  "version": "2.0.1",
   "main": "index.js",
-  "repository": "git@github.com:tekiomo/mf-all-updater.git",
-  "author": "ABE Tomonori <tekiomo@gmail.com>",
+  "repository": "git@github.com:master-q/mf-rebalance.git",
+  "author": "Kiwamu Okabe <kiwamu@debian.or.jp>",
   "license": "MIT",
   "dependencies": {
     "puppeteer": "^3.0.0"
