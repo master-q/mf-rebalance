@@ -44,7 +44,7 @@ Done in 16.75s.
 
 資産の種別を分類が非常にいいかげんです。皆様の資産の種類に合わせて以下を修正する必要があるかもしれません。
 
-```
+```javascript
 $ git grep -C 4 "/\.test"
 index.js-  }));
 index.js-  let money_yen = 0;
