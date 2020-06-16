@@ -5,7 +5,7 @@ if (!process.env.EMAIL || !process.env.PASSWORD) {
 }
 
 function getnum(str) {
-  return Number(str.replace(/[^0-9]/g,''));
+  return Number(str.replace(/[^0-9\.]/g,''));
 }
 
 function round(num) {
@@ -23,6 +23,13 @@ function safeEval(val){
     args: ['--no-sandbox', '--disable-setuid-sandbox']
   });
   const page = await browser.newPage();
+
+  // 為替レート取得
+  await page.goto('https://info.finance.yahoo.co.jp/fx/convert/?a=1&s=USD&t=JPY', goToOpt);
+  const result_ex = await page.evaluate(() => {
+    return document.querySelector('.price').textContent;
+  });
+  const exchange = getnum(result_ex);
 
   // id.moneyforward.com で直接ログインすると、 moneyforward.com にはログインできない
   // moneyforward.com からログインページに移動すること
@@ -153,9 +160,9 @@ function safeEval(val){
   vcgilt = bond_take / time_bond;
 
   console.log("\n### 以下で積立 ###");
-  console.log("* eMAXIS Slim米国株式: " + round(emaxis) + "円 x " + day + "回");
-  console.log("* VOO: " + round(voo) + "円 x " + round(4 * month) + "回");
-  console.log("* V{C,G}{I,L}T: " + round(vcgilt) + "円 x " + time_bond + "回");
+  console.log("* 株式投資信託: " + round(emaxis) + "円 x " + day + "回");
+  console.log("* 株式ETF: " + round(voo / exchange) + "ドル x " + round(4 * month) + "回");
+  console.log("* 債券ETF: " + round(vcgilt / exchange) + "ドル x " + time_bond + "回");
 
   await browser.close()
 })();
