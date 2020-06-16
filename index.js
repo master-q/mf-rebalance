@@ -8,6 +8,14 @@ function getnum(str) {
   return Number(str.replace(/[^0-9]/g,''));
 }
 
+function round(num) {
+  return Math.round(num * 100) / 100
+}
+
+function safeEval(val){
+  return Function('"use strict";return ('+val+')')();
+}
+
 (async () => {
   const goToOpt = {waitUntil: ['load', 'networkidle0']}
 
@@ -38,6 +46,13 @@ function getnum(str) {
 
   await page.type('input[type="password"]', process.env.PASSWORD);
   await page.click('input[type="submit"]')
+
+  // 環境変数から設定を読み込む
+  const rate = safeEval(process.env.RATE);
+  const keep = safeEval(process.env.KEEP);
+  const time_bond = safeEval(process.env.TIME_BOND);
+  const day = safeEval(process.env.DAY);
+  const month = day / 23
 
   // 資産を分類してリバランスを提案する
   await page.goto('https://moneyforward.com/bs/portfolio', goToOpt);
@@ -119,14 +134,28 @@ function getnum(str) {
     throw new Error("検算の結果、資産総額が一致しません");
   }
 
-  console.log("現金(円): " + money_yen);
-  console.log("現金(ドル): " + money_usd);
-  console.log("株式: " + equity);
-  console.log("債券: " + bond);
-  console.log("満期まで保有する債券: " + bond_keep);
-  console.log("資産総額: "+ total);
+  // 資産の現状を表示
+  console.log("現金(円): " + money_yen + "円");
+  console.log("現金(ドル): " + money_usd + "円");
+  console.log("株式: " + equity + "円");
+  console.log("債券: " + bond + "円");
+  console.log("満期まで保有する債券: " + bond_keep + "円");
+  console.log("現在の株式比率: " + round(equity / (equity + bond) * 100) + "%");
+  console.log("資産総額: "+ total + "円");
 
-  // xxx TODO
+  // 積立方針を決定
+  equity_take_d = (total - bond_keep - keep) * rate - equity;
+  equity_take_y = money_yen - keep;
+  bond_take = (total - bond_keep - keep) * (1 - rate) - bond;
+
+  emaxis = equity_take_y / day;
+  voo = (equity_take_d - equity_take_y) / (4 * month);
+  vcgilt = bond_take / time_bond;
+
+  console.log("\n### 以下で積立 ###");
+  console.log("* eMAXIS Slim米国株式: " + round(emaxis) + "円 x " + day + "回");
+  console.log("* VOO: " + round(voo) + "円 x " + round(4 * month) + "回");
+  console.log("* V{C,G}{I,L}T: " + round(vcgilt) + "円 x " + time_bond + "回");
 
   await browser.close()
 })();
