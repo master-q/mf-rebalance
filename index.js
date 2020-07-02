@@ -148,6 +148,7 @@ function safeEval(val){
   console.log("債券: " + bond + "円");
   console.log("満期まで保有する債券: " + bond_keep + "円");
   console.log("現在の株式比率: " + round(equity / (equity + bond) * 100) + "%");
+  console.log("現在の現金保有比率: " + round((money_yen + money_usd) / total * 100) + "%");
   console.log("資産総額: "+ total + "円");
 
   // 積立方針を決定
