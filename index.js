@@ -138,7 +138,7 @@ function safeEval(val){
 
   // 検算
   if (Math.abs(money_yen + money_usd + equity + bond + bond_keep - total) > 10) {
-    throw new Error("検算の結果、資産総額が一致しません");
+    throw new Error("検算の結果、資産総額が一致しません " + (money_yen + money_usd + equity + bond + bond_keep) + " != " + total);
   }
 
   // 資産の現状を表示
