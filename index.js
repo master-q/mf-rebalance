@@ -5,7 +5,7 @@ if (!process.env.EMAIL || !process.env.PASSWORD) {
 }
 
 function getnum(str) {
-  return Number(str.replace(/[^0-9\.]/g,''));
+  return Number(str.replace(/[^\-0-9\.]/g,''));
 }
 
 function round(num) {
