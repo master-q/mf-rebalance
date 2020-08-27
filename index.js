@@ -43,12 +43,15 @@ function showResult(money_yen, money_usd, equity, bond, total, exchange) {
   equity_take_y = money_yen - keep;
   bond_take = (total - keep) * (1 - rate) - bond;
 
-  emaxis = equity_take_y / day;
   voo = (equity_take_d - equity_take_y) / (4 * month);
   vcgilt = bond_take / time_bond;
 
   console.log("\n### 以下で積立 ###");
-  console.log("* 株式投資信託: " + round(emaxis) + "円 x " + day + "回");
+  if (equity_take_y < 0) {
+    console.log("* ドル=>円: " + Math.abs(round(equity_take_y / exchange / month)) + "ドル x " + month + "回");
+  } else {
+    console.log("* 株式投資信託: " + round(equity_take_y / day) + "円 x " + day + "回");
+  }
   console.log("* 株式ETF: " + round(voo / exchange) + "ドル x " + round(4 * month) + "回");
   console.log("* 債券ETF: " + round(vcgilt / exchange) + "ドル x " + time_bond + "回");
 }
