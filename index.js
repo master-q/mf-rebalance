@@ -16,7 +16,7 @@ function safeEval(val) {
   return Function('"use strict";return ('+val+')')();
 }
 
-function showResult(money_yen, money_usd, equity, bond, bond_keep, total, exchange) {
+function showResult(money_yen, money_usd, equity, bond, total, exchange) {
   // 環境変数から設定を読み込む
   const rate = safeEval(process.env.RATE);
   const keep = safeEval(process.env.KEEP);
@@ -25,8 +25,8 @@ function showResult(money_yen, money_usd, equity, bond, bond_keep, total, exchan
   const month = day / 23
 
   // 検算
-  if (Math.abs(money_yen + money_usd + equity + bond + bond_keep - total) > 10) {
-    throw new Error("検算の結果、資産総額が一致しません " + (money_yen + money_usd + equity + bond + bond_keep) + " != " + total);
+  if (Math.abs(money_yen + money_usd + equity + bond - total) > 10) {
+    throw new Error("検算の結果、資産総額が一致しません " + (money_yen + money_usd + equity + bond) + " != " + total);
   }
 
   // 資産の現状を表示
@@ -34,15 +34,14 @@ function showResult(money_yen, money_usd, equity, bond, bond_keep, total, exchan
   console.log("現金(ドル): " + money_usd + "円");
   console.log("株式: " + equity + "円");
   console.log("債券: " + bond + "円");
-  console.log("満期まで保有する債券: " + bond_keep + "円");
   console.log("現在の株式比率: " + round(equity / (equity + bond) * 100) + "%");
   console.log("現在の現金保有比率: " + round((money_yen + money_usd) / total * 100) + "%");
   console.log("資産総額: "+ total + "円");
 
   // 積立方針を決定
-  equity_take_d = (total - bond_keep - keep) * rate - equity;
+  equity_take_d = (total - keep) * rate - equity;
   equity_take_y = money_yen - keep;
-  bond_take = (total - bond_keep - keep) * (1 - rate) - bond;
+  bond_take = (total - keep) * (1 - rate) - bond;
 
   emaxis = equity_take_y / day;
   voo = (equity_take_d - equity_take_y) / (4 * month);
@@ -151,9 +150,8 @@ const main = async () => {
       const tds = [...tr.getElementsByTagName('td')];
       return tds.map(td => td.textContent);
     }));
-    let bond_keep = 0;
     result_bd.forEach(function(item, index, array) {
-      bond_keep += getnum(item[1]);
+      money_usd += getnum(item[1]); // 生の債券はドル現金に計上して使いきる
     });
 
     // 年金
@@ -169,7 +167,7 @@ const main = async () => {
       }
     });
 
-    showResult(money_yen, money_usd, equity, bond, bond_keep, total, exchange);
+    showResult(money_yen, money_usd, equity, bond, total, exchange);
 
     return true
   } catch (e) {
