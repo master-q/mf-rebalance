@@ -32,6 +32,7 @@ function showResult(money_yen, money_usd, equity, bond, total, exchange) {
   // 資産の現状を表示
   console.log("現金(円): " + money_yen + "円");
   console.log("現金(ドル): " + money_usd + "円");
+  console.log("為替: " + exchange + "円/ドル");
   console.log("株式: " + equity + "円");
   console.log("債券: " + bond + "円");
   console.log("現在の株式比率: " + round(equity / (equity + bond) * 100) + "%");
