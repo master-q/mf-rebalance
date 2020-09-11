@@ -20,6 +20,7 @@ function showResult(money_yen, money_usd, equity, bond, total, exchange) {
   // 環境変数から設定を読み込む
   const rate = safeEval(process.env.RATE);
   const keep = safeEval(process.env.KEEP);
+  const time_to_keep = safeEval(process.env.TIME_TO_KEEP);
   const time_bond = safeEval(process.env.TIME_BOND);
   const day = safeEval(process.env.DAY);
   const month = day / 23
@@ -49,7 +50,7 @@ function showResult(money_yen, money_usd, equity, bond, total, exchange) {
 
   console.log("\n### 以下で積立 ###");
   if (equity_take_y < 0) {
-    console.log("* ドル=>円: " + Math.abs(round(equity_take_y / exchange / month)) + "ドル x " + month + "回");
+    console.log("* ドル=>円: " + Math.abs(round(equity_take_y / exchange / time_to_keep)) + "ドル x " + time_to_keep + "回");
   } else {
     console.log("* 株式投資信託: " + round(equity_take_y / day) + "円 x " + day + "回");
   }
