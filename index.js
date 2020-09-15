@@ -32,7 +32,7 @@ function showResult(money_yen, money_usd, equity, bond, total, exchange) {
 
   // 資産の現状を表示
   console.log("現金(円): " + money_yen + "円");
-  console.log("現金(ドル): " + money_usd + "円");
+  console.log("現金(ドル): " + money_usd + "円(" + round(money_usd / exchange) + "ドル)");
   console.log("為替: " + exchange + "円/ドル");
   console.log("株式: " + equity + "円");
   console.log("債券: " + bond + "円");
@@ -45,7 +45,11 @@ function showResult(money_yen, money_usd, equity, bond, total, exchange) {
   equity_take_y = money_yen - keep;
   bond_take = (total - keep) * (1 - rate) - bond;
 
-  voo = (equity_take_d - equity_take_y) / (4 * month);
+  if (equity_take_y < 0) {
+    voo = equity_take_d / (4 * month);
+  } else{
+    voo = (equity_take_d - equity_take_y) / (4 * month);
+  }
   vcgilt = bond_take / time_bond;
 
   console.log("\n### 以下で積立 ###");
