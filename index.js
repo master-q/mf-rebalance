@@ -70,6 +70,7 @@ const main = async () => {
     args: ['--no-sandbox', '--disable-setuid-sandbox']
   });
   const page = await browser.newPage();
+  page.setUserAgent('Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.121 Safari/537.36');
 
   // 為替レート取得
   await page.goto('https://info.finance.yahoo.co.jp/fx/convert/?a=1&s=USD&t=JPY', goToOpt);
