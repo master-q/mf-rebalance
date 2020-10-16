@@ -80,31 +80,35 @@ const main = async () => {
   const exchange = getnum(result_ex);
 
   try {
-    // id.moneyforward.com で直接ログインすると、 moneyforward.com にはログインできない
-    // moneyforward.com からログインページに移動すること
-    await page.goto('https://moneyforward.com/', goToOpt);
-    await page.click('a[href="/sign_in"]')
-    // XXX click しただけではページが真っ白なまま
-    // goto で移動し直す
-    await page.goto(page.url(), goToOpt);
-    // メールアドレスによる認証ページへ移動
-    // click だと input[type="email"] が見つからない場合がある
-    const signinUrl = await page.evaluate(
-        () => Array.from(
-          document.querySelectorAll('.buttonWrapper a:nth-child(1)'),
-          a => a.getAttribute('href')
-        )
+    if (process.env.HTMLFILE) {
+      await page.goto(process.env.HTMLFILE, goToOpt);
+    } else {
+      // id.moneyforward.com で直接ログインすると、 moneyforward.com にはログインできない
+      // moneyforward.com からログインページに移動すること
+      await page.goto('https://moneyforward.com/', goToOpt);
+      await page.click('a[href="/sign_in"]')
+      // XXX click しただけではページが真っ白なまま
+      // goto で移動し直す
+      await page.goto(page.url(), goToOpt);
+      // メールアドレスによる認証ページへ移動
+      // click だと input[type="email"] が見つからない場合がある
+      const signinUrl = await page.evaluate(
+          () => Array.from(
+            document.querySelectorAll('.buttonWrapper a:nth-child(1)'),
+            a => a.getAttribute('href')
+          )
       );
-    await page.goto(`https://id.moneyforward.com${signinUrl[0]}`, goToOpt);
+      await page.goto(`https://id.moneyforward.com${signinUrl[0]}`, goToOpt);
 
-    await page.type('input[type="email"]', process.env.EMAIL);
-    await page.click('input[type="submit"]')
+      await page.type('input[type="email"]', process.env.EMAIL);
+      await page.click('input[type="submit"]')
 
-    await page.type('input[type="password"]', process.env.PASSWORD);
-    await page.click('input[type="submit"]')
+      await page.type('input[type="password"]', process.env.PASSWORD);
+      await page.click('input[type="submit"]')
 
-    // 資産を分類してリバランスを提案する
-    await page.goto('https://moneyforward.com/bs/portfolio', goToOpt);
+      // 資産を分類してリバランスを提案する
+      await page.goto('https://moneyforward.com/bs/portfolio', goToOpt);
+    }
 
     // 資産総額
     const result_t = await page.evaluate(() => {
