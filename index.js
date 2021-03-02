@@ -16,50 +16,26 @@ function safeEval(val) {
   return Function('"use strict";return ('+val+')')();
 }
 
-function showResult(money_yen, money_usd, equity, bond, total, exchange) {
+function showResult(money_yen, money_usd, stock, bond, total, exchange) {
   // 環境変数から設定を読み込む
-  const rate = safeEval(process.env.RATE);
-  const keep = safeEval(process.env.KEEP);
-  const time_to_keep = safeEval(process.env.TIME_TO_KEEP);
-  const time_bond = safeEval(process.env.TIME_BOND);
-  const day = safeEval(process.env.DAY);
-  const month = day / 23
+  const rate_stock = safeEval(process.env.RATE_STOCK);
+  const rate_bond = safeEval(process.env.RATE_BOND);
 
   // 検算
-  if (Math.abs(money_yen + money_usd + equity + bond - total) > 10) {
-    throw new Error("検算の結果、資産総額が一致しません " + (money_yen + money_usd + equity + bond) + " != " + total);
+  if (Math.abs(money_yen + money_usd + stock + bond - total) > 10) {
+    throw new Error("検算の結果、資産総額が一致しません " + (money_yen + money_usd + stock + bond) + " != " + total);
   }
 
   // 資産の現状を表示
   console.log("現金(円): " + money_yen + "円");
   console.log("現金(ドル): " + money_usd + "円(" + round(money_usd / exchange) + "ドル)");
   console.log("為替: " + exchange + "円/ドル");
-  console.log("株式: " + equity + "円");
+  console.log("株式: " + stock + "円");
   console.log("債券: " + bond + "円");
-  console.log("現在の株式比率: " + round(equity / (equity + bond) * 100) + "%");
-  console.log("現在の現金保有比率: " + round((money_yen + money_usd) / total * 100) + "%");
-  console.log("資産総額: "+ total + "円");
-
-  // 積立方針を決定
-  equity_take_d = (total - keep) * rate - equity;
-  equity_take_y = money_yen - keep;
-  bond_take = (total - keep) * (1 - rate) - bond;
-
-  if (equity_take_y < 0) {
-    voo = equity_take_d / (4 * month);
-  } else{
-    voo = (equity_take_d - equity_take_y) / (4 * month);
-  }
-  vcgilt = bond_take / time_bond;
-
-  console.log("\n### 以下で積立 ###");
-  if (equity_take_y < 0) {
-    console.log("* ドル=>円: " + Math.abs(round(equity_take_y / exchange / time_to_keep)) + "ドル x " + time_to_keep + "回");
-  } else {
-    console.log("* 株式投資信託: " + round(equity_take_y / day) + "円 x " + day + "回");
-  }
-  console.log("* 株式ETF: " + round(voo / exchange) + "ドル x " + round(4 * month) + "回");
-  console.log("* 債券ETF: " + round(vcgilt / exchange) + "ドル x " + time_bond + "回");
+  console.log("株式:債券:現金 = " + round(stock / total * 100) + ":"
+              + round(bond / total * 100) + ":"
+              + round((money_yen + money_usd) / total * 100));
+  console.log("資産総額: " + total + "円");
 }
 
 let error = null
@@ -136,13 +112,13 @@ const main = async () => {
       const tds = [...tr.getElementsByTagName('td')];
       return tds.map(td => td.textContent);
     }));
-    let equity = 0;
+    let stock = 0;
     let bond = 0;
     result_eq.forEach(function(item, index, array) {
       if (/債/.test(item[1])) {
         bond += getnum(item[5]);
       } else {
-        equity += getnum(item[5]);
+        stock += getnum(item[5]);
       }
     });
 
@@ -155,7 +131,7 @@ const main = async () => {
       if (/ノムラ・グローバル・セレクト・トラスト/.test(item[0])) {
         money_usd += getnum(item[4]);
       } else {
-        equity += getnum(item[4]);
+        stock += getnum(item[4]);
       }
     });
 
@@ -175,13 +151,13 @@ const main = async () => {
     }));
     result_pns.forEach(function(item, index, array) {
       if (/株式/.test(item[0])) {
-        equity += getnum(item[2]);
+        stock += getnum(item[2]);
       } else {
         bond += getnum(item[5]);
       }
     });
 
-    showResult(money_yen, money_usd, equity, bond, total, exchange);
+    showResult(money_yen, money_usd, stock, bond, total, exchange);
 
     return true
   } catch (e) {
