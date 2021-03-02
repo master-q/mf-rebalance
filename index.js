@@ -17,10 +17,6 @@ function safeEval(val) {
 }
 
 function showResult(money_yen, money_usd, stock, bond, total, exchange) {
-  // 環境変数から設定を読み込む
-  const rate_stock = safeEval(process.env.RATE_STOCK);
-  const rate_bond = safeEval(process.env.RATE_BOND);
-
   // 検算
   if (Math.abs(money_yen + money_usd + stock + bond - total) > 10) {
     throw new Error("検算の結果、資産総額が一致しません " + (money_yen + money_usd + stock + bond) + " != " + total);
@@ -32,8 +28,8 @@ function showResult(money_yen, money_usd, stock, bond, total, exchange) {
   console.log("為替: " + exchange + "円/ドル");
   console.log("株式: " + stock + "円");
   console.log("債券: " + bond + "円");
-  console.log("株式:債券:現金 = " + round(stock / total * 100) + ":"
-              + round(bond / total * 100) + ":"
+  console.log("株式:債券:現金 = " + round(stock / total * 100) + " : "
+              + round(bond / total * 100) + " : "
               + round((money_yen + money_usd) / total * 100));
   console.log("資産総額: " + total + "円");
 }
